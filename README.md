@@ -7,8 +7,8 @@ Docker Compose deployment for [grommunio](https://grommunio.com/) groupware, bas
 ## Architecture
 
 ```
-                    ┌──────────────────────────────────────────┐
-  Host ports        │        Docker Network (grommunio)        │
+  Ports             ┌──────────────────────────────────────────┐
+  Host   container  │        Docker Network (grommunio)        │
   ──────────        │                                          │
   25  ──► 2525  ──► │  ┌──────────────┐   ┌──────────────┐     │
   80  ──► 8080  ──► │  │  gromox-core │   │gromox-archive│     │
@@ -19,7 +19,7 @@ Docker Compose deployment for [grommunio](https://grommunio.com/) groupware, bas
   143 ──► 2143  ──► │         │                  │             │
   110 ──► 2110  ──► │  ┌──────┴───────┐   ┌──────┴───────┐     │
   995 ──► 2995  ──► │  │  gromox-db   │   │  archive-db  │     │
-  8443──► 9443  ──► │  │  chat-db     │   └──────────────┘     │
+  9443──► 9443  ──► │  │  chat-db     │   └──────────────┘     │
                     │  │  files-db    │                        │
                     │  │  office-db   │   ┌───────────────┐    │
                     │  └──────────────┘   │ gromox-office │    │
@@ -52,7 +52,7 @@ The first startup takes several minutes as each container initializes databases,
 | Service | URL |
 |---------|-----|
 | Webmail | `https://<FQDN>` |
-| Admin UI | `https://<FQDN>:8443` |
+| Admin UI | `https://<FQDN>:9443` |
 | ActiveSync | `https://<FQDN>/Microsoft-Server-ActiveSync` |
 | CalDAV/CardDAV | `https://<FQDN>/dav` |
 | Files | `https://<FQDN>/files` (if enabled) |
@@ -215,7 +215,7 @@ All internal ports are above 1024 so containers run without privileges.
 | 995 | 2995 | POP3S | Gromox POP3 over TLS |
 | 143 | 2143 | IMAP | Gromox IMAP (STARTTLS) |
 | 110 | 2110 | POP3 | Gromox POP3 (STARTTLS) |
-| 8443 | 9443 | HTTPS | Grommunio Admin Web UI |
+| 9443 | 9443 | HTTPS | Grommunio Admin Web UI |
 
 The archive container exposes ports **8443** (nginx) and **2693** (archive SMTP) on the Docker network only (not on the host).
 
