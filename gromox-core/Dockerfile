@@ -61,6 +61,13 @@ RUN zypper -n install -y python313-pip && \
 RUN    groupadd 'wheel' &&                         \
     useradd -m -s /bin/bash -G wheel admin && echo "admin:admin" | chpasswd
 
+# Create required socket dirs
+# Grant access to all users to access them
+RUN mkdir /run/gromox
+RUN mkdir /run/grommunio
+RUN mkdir /run/php-fpm
+RUN chmod a+rw -R /run
+
 COPY gromox-core/scripts /home/scripts
 COPY gromox-core/common /home/common
 COPY gromox-core/config /home/config
