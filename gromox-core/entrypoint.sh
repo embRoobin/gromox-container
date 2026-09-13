@@ -168,12 +168,6 @@ cp /home/config/certificate.conf /etc/grommunio-common/nginx/ssl_certificate.con
 ln -s /etc/grommunio-common/nginx/ssl_certificate.conf /etc/grommunio-admin-common/nginx-ssl.conf
 chown gromox:gromox /etc/grommunio-common/ssl/*
 
-# Make the folder writable for grodav
-chown grodav:grodav /var/lib/grommunio-dav
-
-# Ensure gromox owns the user mailbox tree
-chown -R gromox:gromox /var/lib/gromox/user
-chmod -R 0770 /var/lib/gromox/user
 
 # Create gromox.cfg
 touch /etc/gromox/gromox.cfg

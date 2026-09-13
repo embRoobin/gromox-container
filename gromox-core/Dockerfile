@@ -90,6 +90,10 @@ RUN mkdir -p /usr/share/grommunio-common/nginx/locations.d
 
 COPY gromox-core/config/smtp /etc/pam.d/smtp
 
+RUN mkdir -p /var/lib/grommunio-dav /var/lib/gromox/user && \
+    chown grodav:grodav /var/lib/grommunio-dav && \
+    chown -R gromox:gromox /var/lib/gromox/user && \
+    chmod -R 0770 /var/lib/gromox/user
 
 COPY gromox-core/entrypoint.sh /home/entrypoint.sh
 RUN chmod +x /home/entrypoint.sh
