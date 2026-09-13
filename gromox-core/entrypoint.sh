@@ -130,17 +130,6 @@ if [[ $INSTALLVALUE == *"chat"* ]] ; then
 
 fi
 
-if [ -d /etc/php8 ]; then
-  if [ -e "/etc/php8/fpm/php-fpm.conf.default" ] ; then
-    mv /etc/php8/fpm/php-fpm.conf.default /etc/php8/fpm/php-fpm.conf
-  fi
-  cp -f /usr/share/gromox/fpm-gromox.conf.sample /etc/php8/fpm/php-fpm.d/gromox.conf
-elif [ -d /etc/php7 ]; then
-  if [ -e "/etc/php7/fpm/php-fpm.conf.default" ] ; then
-    mv /etc/php7/fpm/php-fpm.conf.default /etc/php7/fpm/php-fpm.conf
-  fi
-  cp -f /usr/share/gromox/fpm-gromox.conf.sample /etc/php7/fpm/php-fpm.d/gromox.conf
-fi
 
 setconf /etc/gromox/http.cfg listen_port 10080
 setconf /etc/gromox/http.cfg http_support_ssl true

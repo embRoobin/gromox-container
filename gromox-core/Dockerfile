@@ -68,6 +68,18 @@ RUN mkdir /run/grommunio
 RUN mkdir /run/php-fpm
 RUN chmod a+rw -R /run
 
+RUN if [ -d /etc/php8 ]; then \
+    if [ -e /etc/php8/fpm/php-fpm.conf.default ]; then \
+      mv /etc/php8/fpm/php-fpm.conf.default /etc/php8/fpm/php-fpm.conf; \
+    fi; \
+    cp -f /usr/share/gromox/fpm-gromox.conf.sample /etc/php8/fpm/php-fpm.d/gromox.conf; \
+  elif [ -d /etc/php7 ]; then \
+    if [ -e /etc/php7/fpm/php-fpm.conf.default ]; then \
+      mv /etc/php7/fpm/php-fpm.conf.default /etc/php7/fpm/php-fpm.conf; \
+    fi; \
+    cp -f /usr/share/gromox/fpm-gromox.conf.sample /etc/php7/fpm/php-fpm.d/gromox.conf; \
+  fi
+
 COPY gromox-core/scripts /home/scripts
 COPY gromox-core/common /home/common
 COPY gromox-core/config /home/config
