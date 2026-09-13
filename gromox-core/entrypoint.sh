@@ -138,9 +138,6 @@ setconf /etc/gromox/http.cfg host_id ${FQDN}
 
 setconf /etc/gromox/smtp.cfg listen_port 24
 
-cp /etc/pam.d/smtp /etc/pam.d/smtp.save
-cp /home/config/smtp /etc/pam.d/smtp
-
 echo "# Do not delete this file unless you know what you do!" > /etc/grommunio-common/setup_done
 
 # Set Grommunio admin password
