@@ -307,17 +307,17 @@ if [[ $ENABLE_ARCHIVE = true ]] ; then
   echo "archive@${FQDN} smtp:[gromox-archive]:2693" > /etc/postfix/transport
   postmap /etc/postfix/transport
 
-# configuration file /usr/share/grommunio-common/nginx/upstreams.d/grommunio-archive.conf:
-cat >  /usr/share/grommunio-common/nginx/upstreams.d/grommunio-archive.conf <<EOF
+  # configuration file /usr/share/grommunio-common/nginx/upstreams.d/grommunio-archive.conf:
+  cat >  /usr/share/grommunio-common/nginx/upstreams.d/grommunio-archive.conf <<EOF
 upstream gromoxarchive {
 	server ${ARCHIVE_HOST}:8443;
 }
 EOF
 
-# configuration file /usr/share/grommunio-common/nginx/locations.d/grommunio-archive.conf:
-cat > /usr/share/grommunio-common/nginx/locations.d/grommunio-archive.conf <<EOF
+  # configuration file /usr/share/grommunio-common/nginx/locations.d/grommunio-archive.conf:
+  cat > /usr/share/grommunio-common/nginx/locations.d/grommunio-archive.conf <<EOF
 location /archive {
-	proxy_pass https://gromoxarchive/archive;
+	proxy_pass https://${ARCHIVE_HOST}/archive;
 	proxy_request_buffering off;
 	proxy_buffering off;
 	error_log /var/log/nginx/nginx-archive-error.log;
@@ -325,7 +325,7 @@ location /archive {
 }
 
 location ~* ^/archive/(qr|js|sso|index).php {
-	proxy_pass https://gromoxarchive;
+	proxy_pass https://${ARCHIVE_HOST};
 	proxy_request_buffering off;
 	proxy_buffering off;
 	error_log /var/log/nginx/nginx-archive-error.log;
@@ -361,7 +361,7 @@ location ~* /archive/view/javascript/piler.js$ {
 }
 
 location ^~ /view {
-	proxy_pass https://gromoxarchive;
+	proxy_pass https://${ARCHIVE_HOST};
 	proxy_request_buffering off;
 	proxy_buffering off;
 	error_log /var/log/nginx/nginx-archive-error.log;

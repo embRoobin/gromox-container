@@ -74,6 +74,8 @@ COPY gromox-core/config /home/config
 
 RUN chmod +x /home/scripts/db.sh
 
+RUN mkdir -p /usr/share/grommunio-common/nginx/locations.d
+
 COPY gromox-core/entrypoint.sh /home/entrypoint.sh
 RUN chmod +x /home/entrypoint.sh
 
