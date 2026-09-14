@@ -86,8 +86,6 @@ EOF
 generate_admin_db_conf "/etc/grommunio-admin-api/conf.d/database.yaml"
 unset MARIADB_HOST MARIADB_ROOT_PASSWORD MARIADB_DATABASE MARIADB_USER MARIADB_PASSWORD
 
-echo "{ \"mailWebAddress\": \"https://${FQDN}/web\", \"rspamdWebAddress\": \"https://${FQDN}:8443/antispam/\" }" | jq > /tmp/config.json
-
 if [[ $INSTALLVALUE == *"chat"* ]] ; then
   . /home/vars/chat_db.env
     echo "drop database if exists ${MARIADB_DATABASE}; \
@@ -125,8 +123,6 @@ if [[ $INSTALLVALUE == *"chat"* ]] ; then
   generate_admin_chat_conf "/etc/grommunio-admin-api/conf.d/chat.yaml"
 
   chmod 640 ${CHAT_CONFIG}
-  jq '.chatWebAddress |= "https://'${FQDN}'/chat"' /tmp/config.json > /tmp/config-new.json
-  mv /tmp/config-new.json /tmp/config.json
 
 fi
 
@@ -250,8 +246,6 @@ location ^~ /files {
 }
 EOF
 
-  jq '.fileWebAddress |= "https://'${FQDN}'/files"' /tmp/config.json > /tmp/config-new.json
-  mv /tmp/config-new.json /tmp/config.json
 fi
 
 if [[ $ENABLE_OFFICE = true ]] ; then
@@ -371,8 +365,6 @@ if [[ $ENABLE_KEYCLOAK = true ]] ; then
   fi
 
 fi
-
-mv /tmp/config.json /etc/grommunio-admin-common/config.json
 
 if [[ $ENABLE_KEYCLOAK = true ]] ; then
   PUBKEY_CLEAN=$(echo "${BEARER_PUBKEY}" | tr -d '\n')

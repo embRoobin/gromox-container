@@ -48,6 +48,21 @@ fi
 # Ensure SSL files are owned by gromox (runs on every start, critical for Let's Encrypt renewals)
 chown -R gromox:gromox /etc/grommunio-common/ssl 2>/dev/null || true
 
+# Regenerate config.json on every start (runs on every start to ensure it's current and survives recreation)
+mkdir -p /etc/grommunio-admin-common
+
+config=$(jq -n '{mailWebAddress: "https://'"${FQDN}"'/web"}')
+config=$(echo "$config" | jq '.rspamdWebAddress = "https://'"${FQDN}"':8443/antispam/"')
+
+if [[ "${ENABLE_FILES}" = "true" ]]; then
+  config=$(echo "$config" | jq '.fileWebAddress = "https://'"${FQDN}"'/files"')
+fi
+if [[ "${ENABLE_ARCHIVE}" = "true" ]]; then
+  config=$(echo "$config" | jq '.archiveWebAddress = "https://'"${FQDN}"'/archive"')
+fi
+
+echo "$config" > /etc/grommunio-admin-common/config.json
+
 # ── Port remapping ─────────────────────────────────────────────────
 # Remap nginx to listen on high ports (>1024) so no privileges needed.
 # The actual listen directives are in the included files under /usr/share/.
