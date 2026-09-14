@@ -95,6 +95,9 @@ RUN mkdir -p /var/lib/grommunio-dav /var/lib/gromox/user && \
     chown -R gromox:gromox /var/lib/gromox/user && \
     chmod -R 0770 /var/lib/gromox/user
 
+COPY gromox-core/config/certificate.conf /etc/grommunio-common/nginx/ssl_certificate.conf
+RUN ln -sf /etc/grommunio-common/nginx/ssl_certificate.conf /etc/grommunio-admin-common/nginx-ssl.conf
+
 COPY gromox-core/entrypoint.sh /home/entrypoint.sh
 RUN chmod +x /home/entrypoint.sh
 

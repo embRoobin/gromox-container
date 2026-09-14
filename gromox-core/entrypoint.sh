@@ -164,9 +164,6 @@ setconf /etc/gromox/pop3.cfg pop3_certificate_path "${SSL_BUNDLE_T}"
 setconf /etc/gromox/pop3.cfg pop3_private_key_path "${SSL_KEY_T}"
 setconf /etc/gromox/pop3.cfg tls_min_proto tls1.2
 
-cp /home/config/certificate.conf /etc/grommunio-common/nginx/ssl_certificate.conf
-ln -s /etc/grommunio-common/nginx/ssl_certificate.conf /etc/grommunio-admin-common/nginx-ssl.conf
-chown gromox:gromox /etc/grommunio-common/ssl/*
 
 
 # Create gromox.cfg

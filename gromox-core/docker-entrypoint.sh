@@ -45,6 +45,9 @@ if [ ! -f "${MARKER_DIR}/entry_done" ]; then
   touch "${MARKER_DIR}/entry_done"
 fi
 
+# Ensure SSL files are owned by gromox (runs on every start, critical for Let's Encrypt renewals)
+chown -R gromox:gromox /etc/grommunio-common/ssl 2>/dev/null || true
+
 # ── Port remapping ─────────────────────────────────────────────────
 # Remap nginx to listen on high ports (>1024) so no privileges needed.
 # The actual listen directives are in the included files under /usr/share/.
