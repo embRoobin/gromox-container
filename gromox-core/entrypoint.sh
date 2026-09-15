@@ -280,7 +280,7 @@ if [[ $ENABLE_ARCHIVE = true ]] ; then
 
   # configuration file /usr/share/grommunio-common/nginx/upstreams.d/grommunio-archive.conf:
   cat >  /usr/share/grommunio-common/nginx/upstreams.d/grommunio-archive.conf <<EOF
-upstream gromoxarchive {
+upstream gromox-archive {
 	server ${ARCHIVE_HOST}:8443;
 }
 EOF
