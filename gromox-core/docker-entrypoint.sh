@@ -8,6 +8,9 @@ if [ -f /home/vars/var.env ]; then
   set +a
 fi
 
+# Source helper functions
+. /home/common/helpers
+
 # Apply timezone from var.env (TIMEZONE); falls back to the image default if unset/invalid
 if [ -n "${TIMEZONE}" ] && [ -f "/usr/share/zoneinfo/${TIMEZONE}" ]; then
   ln -sf "/usr/share/zoneinfo/${TIMEZONE}" /etc/localtime
@@ -62,6 +65,12 @@ if [[ "${ENABLE_ARCHIVE}" = "true" ]]; then
 fi
 
 echo "$config" > /etc/grommunio-admin-common/config.json
+
+# Regenerate admin database config on every start (survives container recreation)
+mkdir -p /etc/grommunio-admin-api/conf.d
+. /home/vars/gromox_db.env
+generate_admin_db_conf "/etc/grommunio-admin-api/conf.d/database.yaml"
+unset MARIADB_HOST MARIADB_ROOT_PASSWORD MARIADB_DATABASE MARIADB_USER MARIADB_PASSWORD
 
 # ── Port remapping ─────────────────────────────────────────────────
 # Remap nginx to listen on high ports (>1024) so no privileges needed.

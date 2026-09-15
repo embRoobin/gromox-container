@@ -72,19 +72,12 @@ fi
   letsencrypt
 fi
 
-#[ -e "/etc/grommunio-common/ssl" ] || mkdir -p "/etc/grommunio-common/ssl"
-
 # Configure config.json of admin-web
 cat > /etc/grommunio-admin-common/nginx.d/web-config.conf <<EOF
 location /config.json {
   alias /etc/grommunio-admin-common/config.json;
 }
 EOF
-
-# Generate AAPI DB access
-. /home/vars/gromox_db.env
-generate_admin_db_conf "/etc/grommunio-admin-api/conf.d/database.yaml"
-unset MARIADB_HOST MARIADB_ROOT_PASSWORD MARIADB_DATABASE MARIADB_USER MARIADB_PASSWORD
 
 if [[ $INSTALLVALUE == *"chat"* ]] ; then
   . /home/vars/chat_db.env
@@ -126,7 +119,6 @@ if [[ $INSTALLVALUE == *"chat"* ]] ; then
 
 fi
 
-
 setconf /etc/gromox/http.cfg listen_port 10080
 setconf /etc/gromox/http.cfg http_support_ssl true
 setconf /etc/gromox/http.cfg listen_ssl_port 10443
@@ -159,7 +151,6 @@ setconf /etc/gromox/pop3.cfg listen_ssl_port 995
 setconf /etc/gromox/pop3.cfg pop3_certificate_path "${SSL_BUNDLE_T}"
 setconf /etc/gromox/pop3.cfg pop3_private_key_path "${SSL_KEY_T}"
 setconf /etc/gromox/pop3.cfg tls_min_proto tls1.2
-
 
 
 # Create gromox.cfg
