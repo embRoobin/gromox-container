@@ -145,6 +145,116 @@ else
   rm -f /etc/postfix/grommunio-archiver-envelope.cf /etc/postfix/transport /etc/postfix/transport.lmdb
 fi
 
+# Regenerate nginx location configurations on every start (survives container recreation)
+mkdir -p /usr/share/grommunio-common/nginx/locations.d
+mkdir -p /usr/share/grommunio-common/nginx/upstreams.d
+
+# Files location (regenerates if ENABLE_FILES changes)
+if [[ "${ENABLE_FILES}" = "true" ]]; then
+  cat > /usr/share/grommunio-common/nginx/locations.d/grommunio-files.conf <<EOF
+location ^~ /files {
+	proxy_pass https://${OFFICE_HOST}:8443/files;
+	proxy_request_buffering off;
+	proxy_buffering off;
+	error_log /var/log/nginx/nginx-files-error.log;
+	access_log /var/log/nginx/nginx-files-access.log;
+}
+EOF
+else
+  rm -f /usr/share/grommunio-common/nginx/locations.d/grommunio-files.conf
+fi
+
+# Office location (regenerates if ENABLE_OFFICE changes)
+if [[ "${ENABLE_OFFICE}" = "true" ]]; then
+  cat > /usr/share/grommunio-common/nginx/locations.d/grommunio-office.conf <<EOF
+location  /cache/ {
+  rewrite /cache/(.*)$ /office/cache/\$1;
+}
+location  /office/ {
+  proxy_pass         https://${OFFICE_HOST}:8443/office/;
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade \$http_upgrade;
+  proxy_set_header Connection \$proxy_connection;
+  proxy_set_header X-Forwarded-Host \$the_host/office;
+  proxy_set_header X-Forwarded-Proto \$the_scheme;
+  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+  access_log /var/log/nginx/nginx-office-access.log;
+  error_log /var/log/nginx/nginx-office-error.log;
+}
+EOF
+else
+  rm -f /usr/share/grommunio-common/nginx/locations.d/grommunio-office.conf
+fi
+
+# Archive upstream (regenerates if ENABLE_ARCHIVE changes)
+if [[ "${ENABLE_ARCHIVE}" = "true" ]]; then
+  cat > /usr/share/grommunio-common/nginx/upstreams.d/grommunio-archive.conf <<EOF
+upstream gromox-archive {
+	server ${ARCHIVE_HOST}:8443;
+}
+EOF
+
+  # configuration file /usr/share/grommunio-common/nginx/locations.d/grommunio-archive.conf:
+  cat > /usr/share/grommunio-common/nginx/locations.d/grommunio-archive.conf <<EOF
+location /archive {
+	proxy_pass https://${ARCHIVE_HOST}/archive;
+	proxy_request_buffering off;
+	proxy_buffering off;
+	error_log /var/log/nginx/nginx-archive-error.log;
+	access_log /var/log/nginx/nginx-archive-access.log;
+}
+
+location ~* ^/archive/(qr|js|sso|index).php {
+	proxy_pass https://${ARCHIVE_HOST};
+	proxy_request_buffering off;
+	proxy_buffering off;
+	error_log /var/log/nginx/nginx-archive-error.log;
+	access_log /var/log/nginx/nginx-archive-access.log;
+}
+
+location ~* ^/archive/(.+\.php)(/|$)$ {
+        rewrite /archive/search.php /archive/index.php?route=search/search&type=simple;
+        rewrite /archive/advanced.php /archive/index.php?route=search/search&type=advanced;
+        rewrite /archive/expert.php /archive/index.php?route=search/search&type=expert;
+        rewrite /archive/search-helper.php /archive/index.php?route=search/helper;
+        rewrite /archive/audit-helper.php /archive/index.php?route=audit/helper;
+        rewrite /archive/message.php /archive/index.php?route=message/view;
+        rewrite /archive/bulkrestore.php /archive/index.php?route=message/bulkrestore;
+        rewrite /archive/bulkremove.php /archive/index.php?route=message/bulkremove;
+        rewrite /archive/rejectremove.php /archive/index.php?route=message/rejectremove;
+        rewrite /archive/bulkpdf.php /archive/index.php?route=message/bulkpdf;
+        rewrite /archive/folders.php /archive/index.php?route=folder/list&;
+        rewrite /archive/settings.php /archive/index.php?route=user/settings;
+        rewrite /archive/login.php /archive/index.php?route=login/login;
+        rewrite /archive/logout.php /archive/index.php?route=login/logout;
+        rewrite /archive/google.php /archive/index.php?route=login/google;
+        rewrite /archive/domain.php /archive/index.php?route=domain/domain;
+        rewrite /archive/ldap.php /archive/index.php?route=ldap/list;
+        rewrite /archive/customer.php /archive/index.php?route=customer/list;
+        rewrite /archive/retention.php /archive/index.php?route=policy/retention;
+        rewrite /archive/archiving.php /archive/index.php?route=policy/archiving;
+        rewrite /archive/legalhold.php /archive/index.php?route=policy/legalhold;
+}
+
+location ~* /archive/view/javascript/piler.js$ {
+        rewrite /archive/view/javascript/piler.js /archive/js.php;
+}
+
+location ^~ /view {
+	proxy_pass https://${ARCHIVE_HOST};
+	proxy_request_buffering off;
+	proxy_buffering off;
+	error_log /var/log/nginx/nginx-archive-error.log;
+	access_log /var/log/nginx/nginx-archive-access.log;
+}
+EOF
+  jq '.archiveWebAddress |= "https://'${FQDN}'/archive"' /tmp/config.json > /tmp/config-new.json
+  mv /tmp/config-new.json /tmp/config.json
+else
+  rm -f /usr/share/grommunio-common/nginx/locations.d/grommunio-archive.conf
+  rm -f /usr/share/grommunio-common/nginx/upstreams.d/grommunio-archive.conf
+fi
+
 # ── Port remapping ─────────────────────────────────────────────────
 # Remap nginx to listen on high ports (>1024) so no privileges needed.
 # The actual listen directives are in the included files under /usr/share/.

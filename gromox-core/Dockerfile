@@ -86,8 +86,6 @@ COPY gromox-core/config /home/config
 
 RUN chmod +x /home/scripts/db.sh
 
-RUN mkdir -p /usr/share/grommunio-common/nginx/locations.d
-
 COPY gromox-core/config/smtp /etc/pam.d/smtp
 
 RUN mkdir -p /var/lib/grommunio-dav /var/lib/gromox/user && \
