@@ -72,6 +72,79 @@ mkdir -p /etc/grommunio-admin-api/conf.d
 generate_admin_db_conf "/etc/grommunio-admin-api/conf.d/database.yaml"
 unset MARIADB_HOST MARIADB_ROOT_PASSWORD MARIADB_DATABASE MARIADB_USER MARIADB_PASSWORD
 
+# Regenerate postfix configuration on every start (survives container recreation)
+mkdir -p /etc/postfix
+. /home/vars/gromox_db.env
+generate_g_cf_files "/etc/postfix/grommunio-virtual-mailbox-domains.cf" "SELECT 1 FROM domains WHERE domain_status=0 AND domainname='%s'"
+generate_g_cf_files "/etc/postfix/grommunio-virtual-mailbox-alias-maps.cf" "SELECT mainname FROM aliases WHERE aliasname='%s' UNION select destination FROM forwards WHERE username='%s' AND forward_type = 1"
+generate_g_cf_files "/etc/postfix/grommunio-virtual-mailbox-maps.cf" "SELECT 1 FROM users WHERE username='%s'"
+generate_g_cf_files "/etc/postfix/grommunio-bcc-forwards.cf" "SELECT destination FROM forwards WHERE username='%s' AND forward_type = 0"
+unset MARIADB_HOST MARIADB_ROOT_PASSWORD MARIADB_DATABASE MARIADB_USER MARIADB_PASSWORD
+
+postconf -e \
+  myhostname="${FQDN}" \
+  virtual_mailbox_domains="mysql:/etc/postfix/grommunio-virtual-mailbox-domains.cf" \
+  virtual_mailbox_maps="mysql:/etc/postfix/grommunio-virtual-mailbox-maps.cf" \
+  virtual_alias_maps="mysql:/etc/postfix/grommunio-virtual-mailbox-alias-maps.cf" \
+  recipient_bcc_maps="mysql:/etc/postfix/grommunio-bcc-forwards.cf" \
+  unverified_recipient_reject_code=550 \
+  virtual_transport="smtp:[127.0.0.1]:24" \
+  relayhost="${RELAYHOST}" \
+  inet_interfaces=all \
+  smtpd_helo_restrictions=permit_mynetworks,permit_sasl_authenticated,reject_invalid_hostname,reject_non_fqdn_hostname \
+  smtpd_sender_restrictions=reject_non_fqdn_sender,permit_sasl_authenticated,permit_mynetworks \
+  smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,reject_unknown_recipient_domain,reject_non_fqdn_hostname,reject_non_fqdn_sender,reject_non_fqdn_recipient,reject_unauth_destination,reject_unauth_pipelining \
+  smtpd_data_restrictions=reject_unauth_pipelining \
+  smtpd_discard_ehlo_keywords=chunking \
+  smtpd_tls_security_level=may \
+  smtpd_tls_auth_only=no \
+  smtpd_tls_cert_file="${SSL_BUNDLE_T}" \
+  smtpd_tls_key_file="${SSL_KEY_T}" \
+  smtpd_tls_received_header=yes \
+  smtpd_tls_session_cache_timeout=3600s \
+  smtpd_use_tls=yes \
+  smtpd_tls_mandatory_protocols="!SSLv2,!SSLv3,!TLSv1,!TLSv1.1" \
+  smtpd_tls_protocols="!SSLv2,!SSLv3,!TLSv1,!TLSv1.1" \
+  smtpd_tls_exclude_ciphers="aNULL,eNULL,EXP,MD5,RC4,DES,3DES,DHE,EDH,kDHE,kEDH,ADH" \
+  smtpd_tls_eecdh_grade=strong \
+  tls_preempt_cipherlist=yes \
+  tls_random_source=dev:/dev/urandom \
+  smtpd_sasl_auth_enable=yes \
+  broken_sasl_auth_clients=yes \
+  smtpd_sasl_security_options=noanonymous \
+  smtpd_sasl_local_domain= \
+  smtpd_milters=inet:localhost:11332 \
+  milter_default_action=accept \
+  smtp_tls_security_level=may \
+  smtp_use_tls=yes \
+  milter_protocol=6
+
+postconf -M tlsmgr/unix="tlsmgr unix - - n 1000? 1 tlsmgr"
+postconf -M submission/inet="submission inet n - n - - smtpd"
+postconf -P submission/inet/syslog_name="postfix/submission"
+postconf -P submission/inet/smtpd_tls_security_level=encrypt
+postconf -P submission/inet/smtpd_tls_mandatory_protocols="!SSLv2,!SSLv3,!TLSv1,!TLSv1.1"
+postconf -P submission/inet/smtpd_tls_protocols="!SSLv2,!SSLv3,!TLSv1,!TLSv1.1"
+postconf -P submission/inet/smtpd_tls_exclude_ciphers="aNULL,eNULL,EXP,MD5,RC4,DES,3DES,DHE,EDH,kDHE,kEDH,ADH"
+postconf -P submission/inet/smtpd_tls_eecdh_grade=strong
+postconf -P submission/inet/smtpd_sasl_auth_enable=yes
+postconf -P submission/inet/smtpd_relay_restrictions=permit_sasl_authenticated,reject
+postconf -P submission/inet/milter_macro_daemon_name=ORIGINATING
+
+postmap lmdb:/etc/postfix/relay 2>/dev/null || true
+postmap lmdb:/etc/postfix/relay_recipients 2>/dev/null || true
+
+# Archive-specific postfix configuration (regenerates if ENABLE_ARCHIVE changes)
+if [[ "${ENABLE_ARCHIVE}" = "true" ]]; then
+  echo "/(.*)/   prepend X-Envelope-To: \$1" > /etc/postfix/grommunio-archiver-envelope.cf
+  postconf -e "smtpd_recipient_restrictions=permit_sasl_authenticated,permit_mynetworks,check_recipient_access pcre:/etc/postfix/grommunio-archiver-envelope.cf,reject_unknown_recipient_domain,reject_non_fqdn_hostname,reject_non_fqdn_sender,reject_non_fqdn_recipient,reject_unauth_destination,reject_unauth_pipelining"
+  postconf -e "always_bcc=archive@${FQDN}"
+  echo "archive@${FQDN} smtp:[gromox-archive]:2693" > /etc/postfix/transport
+  postmap /etc/postfix/transport 2>/dev/null || true
+else
+  rm -f /etc/postfix/grommunio-archiver-envelope.cf /etc/postfix/transport /etc/postfix/transport.lmdb
+fi
+
 # ── Port remapping ─────────────────────────────────────────────────
 # Remap nginx to listen on high ports (>1024) so no privileges needed.
 # The actual listen directives are in the included files under /usr/share/.
