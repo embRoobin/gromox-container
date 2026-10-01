@@ -36,6 +36,8 @@ memory_check()
 
 memory_check
 
+echo "[setup] Starting grommunio initial setup (one-time)..." | tee -a "${LOGFILE}"
+
 # Set repository credentials directly
 # shellcheck source=common/repo
 INSTALLVALUE="core, chat"
@@ -52,6 +54,7 @@ fi
 
 . "/home/common/ssl_setup"
 mkdir -p /etc/grommunio-common/ssl
+echo "[setup] Configuring SSL certificates..." | tee -a "${LOGFILE}"
 RETCMD=1
 if [ "${SSL_INSTALL_TYPE}" = "0" ]; then
   clear
@@ -80,6 +83,7 @@ location /config.json {
 EOF
 
 if [[ $INSTALLVALUE == *"chat"* ]] ; then
+  echo "[setup] Initializing grommunio-chat database and admin user..." | tee -a "${LOGFILE}"
   . /home/vars/chat_db.env
     echo "drop database if exists ${MARIADB_DATABASE}; \
           create database ${MARIADB_DATABASE};" | mysql -h"${MARIADB_HOST}" -u"${MARIADB_USER}" -p"${MARIADB_PASSWORD}" "${MARIADB_DATABASE}" >/dev/null 2>&1
@@ -119,6 +123,7 @@ if [[ $INSTALLVALUE == *"chat"* ]] ; then
 
 fi
 
+echo "[setup] Configuring gromox services..." | tee -a "${LOGFILE}"
 setconf /etc/gromox/http.cfg listen_port 10080
 setconf /etc/gromox/http.cfg http_support_ssl true
 setconf /etc/gromox/http.cfg listen_ssl_port 10443
@@ -167,6 +172,7 @@ done
 
 # Keycloak Configuration
 if [[ $ENABLE_KEYCLOAK = true ]] ; then
+  echo "[setup] Configuring Keycloak SSO integration..." | tee -a "${LOGFILE}"
   # Fetch bearer public key from Keycloak JWKS endpoint
   JWKS_URL="${KEYCLOAK_URL}realms/${KEYCLOAK_REALM}/protocol/openid-connect/certs"
   JWKS_RESPONSE=$(curl -sf "${JWKS_URL}")
@@ -217,6 +223,8 @@ if [[ $ENABLE_KEYCLOAK = true ]] ; then
 else
   rm -f /etc/gromox/keycloak.json /etc/gromox/oidc-import.json
 fi
+
+echo "[setup] Initial setup complete. All services configured." | tee -a "${LOGFILE}"
 setup_done
 
 exit 0

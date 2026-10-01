@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+# Set up logging (for docker-entrypoint phase messages)
+LOGFILE="${LOGFILE:-/var/log/grommunio-startup.log}"
+mkdir -p "$(dirname "${LOGFILE}")" 2>/dev/null || true
+touch "${LOGFILE}" 2>/dev/null || true
+
 # Source environment variables
 if [ -f /home/vars/var.env ]; then
   set -a
@@ -67,12 +72,14 @@ fi
 echo "$config" > /etc/grommunio-admin-common/config.json
 
 # Regenerate admin database config on every start (survives container recreation)
+echo "[entrypoint] Regenerating admin API database configuration..." | tee -a "${LOGFILE}"
 mkdir -p /etc/grommunio-admin-api/conf.d
 . /home/vars/gromox_db.env
 generate_admin_db_conf "/etc/grommunio-admin-api/conf.d/database.yaml"
 unset MARIADB_HOST MARIADB_ROOT_PASSWORD MARIADB_DATABASE MARIADB_USER MARIADB_PASSWORD
 
 # Regenerate postfix configuration on every start (survives container recreation)
+echo "[entrypoint] Regenerating postfix configuration..." | tee -a "${LOGFILE}"
 mkdir -p /etc/postfix
 . /home/vars/gromox_db.env
 generate_g_cf_files "/etc/postfix/grommunio-virtual-mailbox-domains.cf" "SELECT 1 FROM domains WHERE domain_status=0 AND domainname='%s'"
@@ -146,6 +153,7 @@ else
 fi
 
 # Regenerate nginx location configurations on every start (survives container recreation)
+echo "[entrypoint] Regenerating nginx location and upstream configurations..." | tee -a "${LOGFILE}"
 mkdir -p /usr/share/grommunio-common/nginx/locations.d
 mkdir -p /usr/share/grommunio-common/nginx/upstreams.d
 
@@ -323,4 +331,5 @@ DEPLOY
   echo "0 */12 * * * root certbot renew --quiet --standalone --http-01-port 8080 --pre-hook 'supervisorctl stop nginx' --deploy-hook /usr/local/bin/grommunio-cert-deploy --post-hook 'supervisorctl start nginx'" > /etc/cron.d/certbot-renew
 fi
 
+echo "[entrypoint] All configurations regenerated. Starting supervisord..." | tee -a "${LOGFILE}"
 exec /usr/local/bin/supervisord -n -c /etc/supervisord.conf
