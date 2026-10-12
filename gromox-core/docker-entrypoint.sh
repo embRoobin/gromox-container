@@ -47,6 +47,16 @@ if [ ! -f "${MARKER_DIR}/db_done" ]; then
   touch "${MARKER_DIR}/db_done"
 fi
 
+# Regenerate admin API database configuration on every start (survives
+# container recreation). This must happen before the setup entrypoint runs
+# below: on first start, entrypoint.sh calls `grommunio-admin passwd`, which
+# connects to the database via this file.
+echo "[entrypoint] Regenerating admin API database configuration..." | tee -a "${LOGFILE}"
+mkdir -p /etc/grommunio-admin-api/conf.d
+. /home/vars/gromox_db.env
+generate_admin_db_conf "/etc/grommunio-admin-api/conf.d/database.yaml"
+unset MARIADB_HOST MARIADB_ROOT_PASSWORD MARIADB_DATABASE MARIADB_USER MARIADB_PASSWORD
+
 # Run entrypoint configuration (once)
 if [ ! -f "${MARKER_DIR}/entry_done" ]; then
   /home/setup.sh
@@ -70,13 +80,6 @@ if [[ "${ENABLE_ARCHIVE}" = "true" ]]; then
 fi
 
 echo "$config" > /etc/grommunio-admin-common/config.json
-
-# Regenerate admin database config on every start (survives container recreation)
-echo "[entrypoint] Regenerating admin API database configuration..." | tee -a "${LOGFILE}"
-mkdir -p /etc/grommunio-admin-api/conf.d
-. /home/vars/gromox_db.env
-generate_admin_db_conf "/etc/grommunio-admin-api/conf.d/database.yaml"
-unset MARIADB_HOST MARIADB_ROOT_PASSWORD MARIADB_DATABASE MARIADB_USER MARIADB_PASSWORD
 
 # Regenerate postfix configuration on every start (survives container recreation)
 echo "[entrypoint] Regenerating postfix configuration..." | tee -a "${LOGFILE}"
