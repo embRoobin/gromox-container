@@ -96,8 +96,8 @@ RUN mkdir -p /var/lib/grommunio-dav /var/lib/gromox/user && \
 COPY gromox-core/config/certificate.conf /etc/grommunio-common/nginx/ssl_certificate.conf
 RUN ln -sf /etc/grommunio-common/nginx/ssl_certificate.conf /etc/grommunio-admin-common/nginx-ssl.conf
 
-COPY gromox-core/entrypoint.sh /home/entrypoint.sh
-RUN chmod +x /home/entrypoint.sh
+COPY gromox-core/setup.sh /home/setup.sh
+RUN chmod +x /home/setup.sh
 
 COPY gromox-core/docker-entrypoint.sh /home/docker-entrypoint.sh
 RUN chmod +x /home/docker-entrypoint.sh

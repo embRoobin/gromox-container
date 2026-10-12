@@ -49,7 +49,7 @@ fi
 
 # Run entrypoint configuration (once)
 if [ ! -f "${MARKER_DIR}/entry_done" ]; then
-  /home/entrypoint.sh
+  /home/setup.sh
   touch "${MARKER_DIR}/entry_done"
 fi
 
