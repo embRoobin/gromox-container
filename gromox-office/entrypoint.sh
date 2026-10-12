@@ -42,7 +42,7 @@ INSTALLVALUE="files, office"
 
 X500="i$(printf "%llx" "$(date +%s)")"
 
-. "/home/common/ssl_setup"
+. "/home/common/ssl_setup_client"
 RETCMD=1
 if [ "${SSL_INSTALL_TYPE}" = "0" ]; then
   clear

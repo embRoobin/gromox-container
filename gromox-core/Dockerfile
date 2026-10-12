@@ -81,7 +81,7 @@ RUN if [ -d /etc/php8 ]; then \
   fi
 
 COPY gromox-core/scripts /home/scripts
-COPY gromox-core/common /home/common
+COPY common /home/common
 COPY gromox-core/config /home/config
 
 RUN chmod +x /home/scripts/db.sh

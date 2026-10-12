@@ -52,7 +52,7 @@ RUN zypper -n install -y python313-pip && \
 RUN    groupadd 'wheel' &&                         \
     useradd -m -s /bin/bash -G wheel admin && echo "admin:admin" | chpasswd
 
-COPY gromox-archive/common /home/common
+COPY common /home/common
 COPY gromox-archive/config /home/config
 
 COPY gromox-archive/entrypoint.sh /home/entrypoint.sh

@@ -52,7 +52,7 @@ else
   echo "${X500}" > "${X500_FILE}"
 fi
 
-. "/home/common/ssl_setup"
+. "/home/common/ssl_setup_core"
 mkdir -p /etc/grommunio-common/ssl
 echo "[setup] Configuring SSL certificates..." | tee -a "${LOGFILE}"
 RETCMD=1

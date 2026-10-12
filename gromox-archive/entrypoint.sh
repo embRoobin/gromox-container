@@ -48,7 +48,7 @@ else
   echo "${X500}" > "${X500_FILE}"
 fi
 
-. "/home/common/ssl_setup"
+. "/home/common/ssl_setup_client"
 RETCMD=1
 if [ "${SSL_INSTALL_TYPE}" = "0" ]; then
   clear

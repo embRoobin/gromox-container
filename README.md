@@ -417,6 +417,7 @@ All ports should be above 1024. Expected nginx ports: 8080, 8443 (web), 9080, 94
 .
 ├── docker-compose.yml              # Service orchestration
 ├── README.md                       # This file
+├── common/                         # Shared helpers, repo/install scripts, SSL setup (used by all containers)
 ├── config/
 │   ├── archive_db.env              # Database settings for archive db
 │   ├── chat_db.env                 # Database settings for chat db
@@ -431,7 +432,6 @@ All ports should be above 1024. Expected nginx ports: 8080, 8443 (web), 9080, 94
 │   ├── supervisord.conf            # Supervisord main config
 │   ├── supervisor.d/               # Per-service configs (18 files)
 │   ├── scripts/db.sh               # Database initialization
-│   ├── common/                     # Shared helpers, SSL setup
 │   └── config/                     # Config templates
 ├── gromox-archive/
 │   ├── Dockerfile
@@ -439,7 +439,6 @@ All ports should be above 1024. Expected nginx ports: 8080, 8443 (web), 9080, 94
 │   ├── entrypoint.sh
 │   ├── supervisord.conf
 │   ├── supervisor.d/               # Per-service configs (6 files)
-│   ├── common/
 │   └── config/
 └── gromox-office/
     ├── Dockerfile
@@ -447,7 +446,6 @@ All ports should be above 1024. Expected nginx ports: 8080, 8443 (web), 9080, 94
     ├── entrypoint.sh
     ├── supervisord.conf
     ├── supervisor.d/               # Per-service configs (8 files)
-    ├── common/
     └── config/
 ```
 
