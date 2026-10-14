@@ -70,7 +70,7 @@ chown -R gromox:gromox /etc/grommunio-common/ssl 2>/dev/null || true
 mkdir -p /etc/grommunio-admin-common
 
 config=$(jq -n '{mailWebAddress: "https://'"${FQDN}"'/web"}')
-config=$(echo "$config" | jq '.rspamdWebAddress = "https://'"${FQDN}"':8443/antispam/"')
+config=$(echo "$config" | jq '.rspamdWebAddress = "https://'"${FQDN}"'/antispam/"')
 
 if [[ "${ENABLE_FILES}" = "true" ]]; then
   config=$(echo "$config" | jq '.fileWebAddress = "https://'"${FQDN}"'/files"')
@@ -277,6 +277,12 @@ for f in /usr/share/grommunio-common/nginx.conf /etc/nginx/nginx.conf; do
   sed -i 's/\blisten\s\+80\b/listen 8080/g; s/\blisten\s\+\[::]\:80\b/listen [::]:8080/g' "$f"
   sed -i 's/\blisten\s\+443\b/listen 8443/g; s/\blisten\s\+\[::]\:443\b/listen [::]:8443/g' "$f"
 done
+
+# Relative redirects (e.g. "/" -> "/web/") must not carry the internal port 8443,
+# otherwise clients mapped from host 443 get redirected to an unreachable :8443.
+cat > /etc/nginx/conf.d/grommunio-port-remap.conf << 'EOF'
+absolute_redirect off;
+EOF
 
 # Admin HTTP: 8080 -> 9080 (avoid conflict with remapped web port)
 sed -i 's/\blisten\s\+8080\b/listen 9080/g; s/\blisten\s\+\[::]\:8080\b/listen [::]:9080/g' \
