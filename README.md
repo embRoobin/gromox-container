@@ -280,6 +280,18 @@ docker exec gromox-core cat /var/log/grommunio-setup.log
 docker exec gromox-core tail -f /var/log/supervisor-nginx.log
 ```
 
+### Fetchmail accounts
+
+The fetchmail config (`/etc/fetchmailrc`) is generated from the admin database when the container starts. Fetchmail accounts added or changed afterwards are not picked up until the container is restarted:
+
+```bash
+docker restart gromox-core
+```
+
+The admin web UI has an option `SSL certificate check` for each fetchmail daemon. 
+Enabling it causes problems with the generated `/etc/fetchmailrc`. 
+The option is already set on the daemon base configuration, so it should be disabled via web based config.
+
 ### Reconfiguring after var.env changes
 
 The setup scripts only run once (on first start). To re-run them after changing `var.env`:

@@ -318,6 +318,17 @@ if [ -f "${CHAT_CONFIG}" ] && [ -f /etc/supervisor.d/grommunio-chat.conf ]; then
   sed -i 's/autostart=false/autostart=true/' /etc/supervisor.d/grommunio-chat.conf
 fi
 
+# Generate fetchmail config from the admin DB (MySQL is up at this point) and
+# enable the fetchmail service only if fetchmail actually has something to poll
+echo "[entrypoint] Generating fetchmail configuration..." | tee -a "${LOGFILE}"
+grommunio-admin fetchmail write-rc -f >>"${LOGFILE}" 2>&1
+if [ ! -f /etc/fetchmailrc ]; then
+  echo "[entrypoint] No fetchmail configuration generated, creating empty /etc/fetchmailrc" | tee -a "${LOGFILE}"
+  touch /etc/fetchmailrc
+  chmod 600 /etc/fetchmailrc
+  chown fetchmail /etc/fetchmailrc
+fi
+
 # Set up certbot renewal if Let's Encrypt is enabled
 if [ "${SSL_INSTALL_TYPE}" = "2" ]; then
   # On an actual renewal, rebuild the concatenated bundle that nginx and the
